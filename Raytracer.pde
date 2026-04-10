@@ -1,39 +1,19 @@
-float ratio = 16.0/9.0;
-int image_width = 400;
-int image_height = int (image_width/ratio);
-float focal_length = 1.0; // distance entre la caméra et le viewport
-float viewport_height = 2.0;
-float viewport_width = viewport_height*float(image_width)/float(image_height);
-Vect camera_center = new Vect(0,0,0);
-Vect viewport_u = new Vect(viewport_width, 0, 0);
-Vect viewport_v = new Vect(0, -viewport_height, 0);
-Vect pixel_delta_u = viewport_u.div(image_width);
-Vect pixel_delta_v = viewport_v.div(image_height);
-Vect viewport_upper_left = camera_center.sub(new Vect(0, 0, focal_length)).sub(viewport_u.div(2)).sub(viewport_v.div(2));
-Vect pixel00_loc = viewport_upper_left.add(pixel_delta_u.add(pixel_delta_v).div(0.5));
+Camera camera;
 
-float hit_sphere (Vect center, float radius, Ray r)
+color ray_color(Ray r, Hittable_list world, Interval ray_t, int depth)
 {
-	Vect oc = center.sub(r.orig);
-	float a = r.dir.norm()*r.dir.norm();
-	float h = r.dir.dot(oc);
-	float c = oc.norm()*oc.norm() - radius*radius;
-	float discriminant = h*h - a*c;
-	if (discriminant < 0)
-		return -1.0;
-	else
-		return (h -sqrt(discriminant)) /a;
-}
-color ray_color(Ray r)
+	if (depth <= 0)
+		return color(0, 0, 0);
 
-{
-	float t = hit_sphere(new Vect(0,0,-1), 0.5, r);
-	if (t > 0.0){
-		Vect normal = r.at(t).sub(new Vect(0,0,-1)).normalized();
-		float red = 0.5 * (normal.x + 1.0);
-		float g = 0.5 * (normal.y + 1.0);
-		float b = 0.5 * (normal.z + 1.0);
-		return color(red * 255, g * 255, b * 255);
+	Hit_record rec = new Hit_record();
+	if (world.hit(r, ray_t, rec)){
+		Vect scatter_direction = rec.normal.add(random_unit_vector());
+		if (scatter_direction.norm() < 1e-8)
+			scatter_direction = rec.normal;
+
+		Ray scattered = new Ray(rec.p, scatter_direction);
+		color bounce = ray_color(scattered, world, new Interval(0.001, ray_t.max), depth - 1);
+		return color(red(bounce) * 0.5, green(bounce) * 0.5, blue(bounce) * 0.5);
 	}
 	Vect unit_direction = r.dir.normalized();
 	float a = 0.5*(unit_direction.y + 1.0);
@@ -43,34 +23,51 @@ color ray_color(Ray r)
 		a
 	);
 }
+Vect randomvect(){
+	return new Vect(random(-1,1), random(-1,1), random(-1,1));
+	
+}
+Vect random_unit_vector(){
+	while(true){
+		Vect p = randomvect();
+		float lensq = p.norm()*p.norm();
+		if (lensq<=1)
+			return p.div(sqrt(lensq)); 
+	}
+}
+
+Vect randon_on_hemisphere(Vect normal)
+{
+	Vect on_unit_sphere = random_unit_vector();
+	if (normal.dot(on_unit_sphere) > 0)
+		return on_unit_sphere;
+	else
+		return on_unit_sphere.div(-1);
+}
 
 void settings()
 {
-	size(image_width, image_height);
+	camera = new Camera();
+	camera.aspect_ratio = 16.0/9.0;
+	camera.image_width = 800;
+	camera.initialize();
+	size(camera.image_width, camera.image_height);
+	noSmooth();
 }
 void setup()
 {
-	loadPixels();
 	noLoop();
-	for (int j = 0; j < image_height; j ++)
-	{
-		for (int i = 0; i < image_width; i ++)
-		{
-			Vect pixel_center = pixel00_loc.add(pixel_delta_u.m(i)).add(pixel_delta_v.m(j));
-			Vect ray_direction = pixel_center.sub(camera_center);
-			Ray r = new Ray(camera_center, ray_direction);
-			color pixel_color = ray_color(r);
-			PutPixel(i,j,pixel_color);
-		}
-	}
-	updatePixels();
 }
-void PutPixel(int x, int y, color pixel_color)
-{
-	int i = y*image_width + x;
-	pixels[i] = pixel_color;
-}
+
 void draw()
 {
-
+	Interval ray_t;
+	Hittable_list world;
+	world = new Hittable_list();
+	world.add(new Sphere(0,0,-1,0.5));
+	world.add(new Sphere(0, -101, -1, 100));
+	ray_t = new Interval(0, Float.POSITIVE_INFINITY);
+	loadPixels();
+	camera.render(world, ray_t);
+	updatePixels();
 }
