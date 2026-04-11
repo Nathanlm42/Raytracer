@@ -17,6 +17,9 @@ class Vect
   {
     return (dist (x, y, z, u.x, u.y, u.z));
   }
+  float squarednorm(){
+    return (x*x + y*y + z*z);
+  }
   float distance(Vect u)
   {
     return distvect(u);
@@ -72,4 +75,17 @@ class Vect
   {
     return("x : " + this.x + '\n' + "y : " + this.y + '\n' + "z : " + this.z);
   }
+}
+
+Vect randomvect(){
+	return new Vect(random(-1,1), random(-1,1), random(-1,1));
+	
+}
+Vect random_unit_vector(){
+	while(true){
+		Vect p = randomvect();
+		float lensq = p.squarednorm();
+		if (lensq<=1)
+			return p.div(sqrt(lensq)); 
+	}
 }

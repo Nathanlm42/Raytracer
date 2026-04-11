@@ -9,6 +9,7 @@ class Camera{
 	private Vect pixel_delta_u;
 	private Vect pixel_delta_v;
 	int pixel_sample = 1;
+	int max_depth = 10;
 
 	void render(Hittable_list world, Interval ray_t){
 	renderworld = world;
@@ -30,12 +31,12 @@ class Camera{
 		for (int s = 0; s < pixel_sample; s ++)
 		{
 			Vect tmp_pixel_center = pixel_center.copy();
-			float offsetx = random(-0.5, 0.5);
-			float offsety = random(-0.5, 0.5);
+			float offsetx = random(-1, 1);
+			float offsety = random(-1, 1);
 			tmp_pixel_center = tmp_pixel_center.add(pixel_delta_u.m(offsetx)).add(pixel_delta_v.m(offsety));
 			Vect ray_direction = tmp_pixel_center.sub(center);
 			Ray r = new Ray(center, ray_direction);
-			color sample_color = ray_color(r, renderworld, renderray_t, 10);
+			color sample_color = ray_color(r, renderworld, renderray_t, max_depth);
 			red += red(sample_color);
 			green += green(sample_color);
 			blue += blue(sample_color);
@@ -46,7 +47,7 @@ class Camera{
 		image_height = int(image_width/aspect_ratio);
 		image_height = (image_height < 1) ? 1 : image_height;
 		center = new Vect(0,0,0);
-		float focal_lenght = 1.0;
+		float focal_lenght = 1;
 		float viewport_height = 2.0;
 		float viewport_width = viewport_height*(float(image_width)/image_height);
 		Vect viewport_u = new Vect(viewport_width, 0, 0);

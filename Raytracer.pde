@@ -1,19 +1,28 @@
 Camera camera;
 
-color ray_color(Ray r, Hittable_list world, Interval ray_t, int depth)
+color ray_color(Ray r, Hittable_list world, Interval ray_t, int max_depth)
 {
-	if (depth <= 0)
-		return color(0, 0, 0);
+	float red, green, blue;
+	color color_pixel;
 
+	if (max_depth == 0)
+		return color(0, 0,0);
 	Hit_record rec = new Hit_record();
 	if (world.hit(r, ray_t, rec)){
-		Vect scatter_direction = rec.normal.add(random_unit_vector());
-		if (scatter_direction.norm() < 1e-8)
-			scatter_direction = rec.normal;
-
-		Ray scattered = new Ray(rec.p, scatter_direction);
-		color bounce = ray_color(scattered, world, new Interval(0.001, ray_t.max), depth - 1);
-		return color(red(bounce) * 0.5, green(bounce) * 0.5, blue(bounce) * 0.5);
+		color emitted = rec.mat.emitted();
+		Ray bounce = new Ray();
+		if (!rec.mat.scatter(r, rec, bounce))
+			return emitted;
+		color_pixel = ray_color(bounce, world, ray_t, max_depth - 1);
+		red = lineartogamma(red(color_pixel));
+		green = lineartogamma(green(color_pixel));
+		blue = lineartogamma(blue(color_pixel));
+		color bounced = color(red*rec.attenuation.x,green*rec.attenuation.y,blue*rec.attenuation.z);
+		return color(
+			min(255, red(emitted) + red(bounced)),
+			min(255, green(emitted) + green(bounced)),
+			min(255, blue(emitted) + blue(bounced))
+		);
 	}
 	Vect unit_direction = r.dir.normalized();
 	float a = 0.5*(unit_direction.y + 1.0);
@@ -23,26 +32,9 @@ color ray_color(Ray r, Hittable_list world, Interval ray_t, int depth)
 		a
 	);
 }
-Vect randomvect(){
-	return new Vect(random(-1,1), random(-1,1), random(-1,1));
-	
-}
-Vect random_unit_vector(){
-	while(true){
-		Vect p = randomvect();
-		float lensq = p.norm()*p.norm();
-		if (lensq<=1)
-			return p.div(sqrt(lensq)); 
-	}
-}
-
-Vect randon_on_hemisphere(Vect normal)
-{
-	Vect on_unit_sphere = random_unit_vector();
-	if (normal.dot(on_unit_sphere) > 0)
-		return on_unit_sphere;
-	else
-		return on_unit_sphere.div(-1);
+float lineartogamma(float component){
+	float factor = component/255.0;
+	return(sqrt(factor)*component);
 }
 
 void settings()
@@ -63,11 +55,22 @@ void draw()
 {
 	Interval ray_t;
 	Hittable_list world;
+	Material m1 = new lambertian(new Vect(0.8*255,0.8*255,0.8*255));
+	Material m2 = new lambertian(new Vect(0.1*255, 0.2*255, 0.5 *255));
+	Material m3 = new metal(new Vect(0.8*255,0.8*255,0.8*255), 0.3);
+	Material m4 = new diffuse_light(color(255, 235, 200));
 	world = new Hittable_list();
-	world.add(new Sphere(0,0,-1,0.5));
-	world.add(new Sphere(0, -101, -1, 100));
-	ray_t = new Interval(0, Float.POSITIVE_INFINITY);
+	world.add(new Sphere(0,0,-1,0.5, m1));
+	world.add(new Sphere(0, -100.5, -1, 100, m2));
+	world.add(new Sphere(-1, 1.25, -2, 1, m3));
+	world.add(new Sphere(1, 1.25, -2, 0.5, m4));
+	ray_t = new Interval(0.1, Float.POSITIVE_INFINITY);
+	camera.pixel_sample = 10;
+	camera.max_depth = 10;
 	loadPixels();
+	float start = millis();
 	camera.render(world, ray_t);
+	float stop = millis();
+	println("temps écoulé : " + ((stop - start)/1000) + "s");
 	updatePixels();
 }

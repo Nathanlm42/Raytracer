@@ -8,6 +8,9 @@ class Ray
 		orig = origin.copy();
 		dir = direction.copy();
 	}
+	
+	Ray(){
+	}
 
 	Vect at (float t) // Ray moving function
 	{
