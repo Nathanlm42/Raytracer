@@ -9,20 +9,13 @@ color ray_color(Ray r, Hittable_list world, Interval ray_t, int max_depth)
 		return color(0, 0,0);
 	Hit_record rec = new Hit_record();
 	if (world.hit(r, ray_t, rec)){
-		color emitted = rec.mat.emitted();
 		Ray bounce = new Ray();
-		if (!rec.mat.scatter(r, rec, bounce))
-			return emitted;
+		rec.mat.scatter(r, rec, bounce);
 		color_pixel = ray_color(bounce, world, ray_t, max_depth - 1);
 		red = lineartogamma(red(color_pixel));
 		green = lineartogamma(green(color_pixel));
 		blue = lineartogamma(blue(color_pixel));
-		color bounced = color(red*rec.attenuation.x,green*rec.attenuation.y,blue*rec.attenuation.z);
-		return color(
-			min(255, red(emitted) + red(bounced)),
-			min(255, green(emitted) + green(bounced)),
-			min(255, blue(emitted) + blue(bounced))
-		);
+		return (color(red*rec.attenuation.x,green*rec.attenuation.y,blue*rec.attenuation.z));
 	}
 	Vect unit_direction = r.dir.normalized();
 	float a = 0.5*(unit_direction.y + 1.0);
@@ -58,12 +51,10 @@ void draw()
 	Material m1 = new lambertian(new Vect(0.8*255,0.8*255,0.8*255));
 	Material m2 = new lambertian(new Vect(0.1*255, 0.2*255, 0.5 *255));
 	Material m3 = new metal(new Vect(0.8*255,0.8*255,0.8*255), 0.3);
-	Material m4 = new diffuse_light(color(255, 235, 200));
 	world = new Hittable_list();
 	world.add(new Sphere(0,0,-1,0.5, m1));
 	world.add(new Sphere(0, -100.5, -1, 100, m2));
 	world.add(new Sphere(-1, 1.25, -2, 1, m3));
-	world.add(new Sphere(1, 1.25, -2, 0.5, m4));
 	ray_t = new Interval(0.1, Float.POSITIVE_INFINITY);
 	camera.pixel_sample = 10;
 	camera.max_depth = 10;
