@@ -14,14 +14,12 @@ class Camera{
 	void render(Hittable_list world, Interval ray_t){
 	renderworld = world;
 	renderray_t = ray_t;
-	for (int j = 0; j < image_height; j ++)
-	{
+	IntStream.range(0, image_height).parallel().forEach( j ->{
 		for (int i = 0; i < image_width; i ++)
 		{
 			Vect pixel_center = pixel00_loc.add(pixel_delta_u.m(i)).add(pixel_delta_v.m(j));
 			antialiasing(pixel_center, i, j);
-		}
-	}
+		}});
 	}
 	void antialiasing(Vect pixel_center, int i, int j)
 	{
@@ -31,17 +29,17 @@ class Camera{
 		for (int s = 0; s < pixel_sample; s ++)
 		{
 			Vect tmp_pixel_center = pixel_center.copy();
-			float offsetx = random(-1, 1);
-			float offsety = random(-1, 1);
+			float offsetx = ThreadLocalRandom.current().nextFloat(-1.0, 1.0);
+			float offsety = ThreadLocalRandom.current().nextFloat(-1.0, 1.0);
 			tmp_pixel_center = tmp_pixel_center.add(pixel_delta_u.m(offsetx)).add(pixel_delta_v.m(offsety));
 			Vect ray_direction = tmp_pixel_center.sub(center);
 			Ray r = new Ray(center, ray_direction);
 			color sample_color = ray_color(r, renderworld, renderray_t, max_depth);
-			red += red(sample_color);
-			green += green(sample_color);
-			blue += blue(sample_color);
+			red += red_safe(sample_color);
+			green += green_safe(sample_color);
+			blue += blue_safe(sample_color);
 		}
-		PutPixel(i, j, color(red / pixel_sample, green / pixel_sample, blue / pixel_sample));
+		PutPixel(i, j, rgb_safe(red / pixel_sample, green / pixel_sample, blue / pixel_sample));
 	}
 	void initialize(){
 		image_height = int(image_width/aspect_ratio);

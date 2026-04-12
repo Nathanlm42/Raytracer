@@ -78,14 +78,14 @@ class Vect
 }
 
 Vect randomvect(){
-	return new Vect(random(-1,1), random(-1,1), random(-1,1));
+	return new Vect(ThreadLocalRandom.current().nextFloat(-1.0, 1.0), ThreadLocalRandom.current().nextFloat(-1.0, 1.0), random(-1,1));
 	
 }
 Vect random_unit_vector(){
 	while(true){
 		Vect p = randomvect();
 		float lensq = p.squarednorm();
-		if (lensq<=1)
+		if (lensq<=1.0f && lensq > 1e-8f)
 			return p.div(sqrt(lensq)); 
 	}
 }
