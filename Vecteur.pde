@@ -75,6 +75,13 @@ class Vect
   {
     return("x : " + this.x + '\n' + "y : " + this.y + '\n' + "z : " + this.z);
   }
+  Vect cross(Vect u)
+  {
+    return new Vect(
+      y*u.z - z*u.y,
+      z*u.x - x*u.z,
+      x*u.y - y*u.x);
+  }
 }
 
 Vect randomvect(){

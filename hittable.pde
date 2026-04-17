@@ -3,7 +3,7 @@ class Hit_record
 	Vect p; // Point de l'intersection
 	Vect normal; // Normale de l'intersection
 	float t; // distance entre origine et intersection
-	boolean front_face;
+	boolean front_face; // Détermine si le rayon provient de l'extérieur ou de l'intérieur de la sphère
 	Material mat;
 	Vect attenuation;
 
