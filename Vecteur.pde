@@ -44,10 +44,6 @@ class Vect
   {
     return (new Vect(this.x * a, this.y * a, this.z * a));
   }
-  float ps(Vect u)
-  {
-    return dot(u);
-  }
   float dot(Vect u)
   {
     return(this.x * u.x + this.y * u.y + this.z * u.z);
@@ -95,4 +91,13 @@ Vect random_unit_vector(){
 		if (lensq<=1.0f && lensq > 1e-8f)
 			return p.div(sqrt(lensq)); 
 	}
+}
+
+Vect random_unit_disk(){
+  while(true){
+    Vect p = new Vect (random(-1, 1), random(-1, 1), 0);
+    float lensq = p.squarednorm();
+    if (lensq <= 1)
+        return p.div(sqrt(lensq));
+  }
 }

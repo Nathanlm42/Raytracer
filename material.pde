@@ -37,15 +37,17 @@ class metal extends Material{
 		scattered.dir = scattered.dir.normalized().add(random_unit_vector().m(fuzz));
 		scattered.orig = rec.p;
 		rec.attenuation = albedo;
-		return true;
+		return (scattered.dir.dot(rec.normal) > 0);
 	}
 }
 
 class dielectric extends Material{
 	float refraction_index;
-	
+	float R_0;
+
 	dielectric(float refraction_index){
 		this.refraction_index = refraction_index;
+		R_0 = (1 - refraction_index)/ (1 + refraction_index);
 	}
 
 
@@ -53,7 +55,6 @@ class dielectric extends Material{
 	float cos_theta = r.dir.m(-1).dot(rec.normal);
 	float sin_theta = sqrt(1.0 - cos_theta*cos_theta);
 	float ri = rec.front_face ? (1.0/refraction_index) : refraction_index;
-	float R_0 = (1 - refraction_index)/ (1 + refraction_index);
 
 	if (ri*sin_theta < 1.0 || schlick(R_0, cos_theta) >  random(0,1))
 		reflect(r.dir, rec.normal);
